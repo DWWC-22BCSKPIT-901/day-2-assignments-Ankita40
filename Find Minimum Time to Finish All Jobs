@@ -1,0 +1,63 @@
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <iostream>
+
+class Solution {
+public:
+    int minimumTimeRequired(std::vector<int>& jobs, int k) {
+        int left = *std::max_element(jobs.begin(), jobs.end()); // Minimum possible maxTime
+        int right = std::accumulate(jobs.begin(), jobs.end(), 0); // Maximum possible maxTime
+
+        // Binary search for the optimal maxTime
+        while (left < right) {
+            int mid = left + (right - left) / 2;
+            if (canDistribute(jobs, k, mid)) {
+                right = mid; // Try for a smaller maxTime
+            } else {
+                left = mid + 1; // Increase maxTime
+            }
+        }
+
+        return left;
+    }
+
+private:
+    // Helper function to check if jobs can be distributed within maxTime
+    bool canDistribute(const std::vector<int>& jobs, int k, int maxTime) {
+        std::vector<int> workers(k, 0); // Track the workload of each worker
+        return backtrack(jobs, workers, 0, maxTime);
+    }
+
+    // Backtracking function to try assigning jobs to workers
+    bool backtrack(const std::vector<int>& jobs, std::vector<int>& workers, int jobIndex, int maxTime) {
+        if (jobIndex == jobs.size()) {
+            return true; // All jobs have been assigned
+        }
+
+        for (int i = 0; i < workers.size(); i++) {
+            if (workers[i] + jobs[jobIndex] > maxTime) continue; // Prune paths that exceed maxTime
+
+            workers[i] += jobs[jobIndex]; // Assign job to worker i
+            if (backtrack(jobs, workers, jobIndex + 1, maxTime)) {
+                return true;
+            }
+            workers[i] -= jobs[jobIndex]; // Backtrack
+
+            // Optimization: if a worker has no jobs assigned yet, skip further workers
+            if (workers[i] == 0) break;
+        }
+
+        return false; // No valid assignment found
+    }
+};
+
+int main() {
+    Solution solution;
+    std::vector<int> jobs = {3, 2, 3};
+    int k = 3;
+
+    std::cout << "Minimum Maximum Working Time: " << solution.minimumTimeRequired(jobs, k) << std::endl;
+
+    return 0;
+}
